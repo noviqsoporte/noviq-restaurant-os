@@ -7,10 +7,42 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import StatusBadge from '../components/StatusBadge';
 
 const emptyForm = {
-  'Pedido ID': '', Nombre: '', Telefono: '', Fecha: '',
+  'Pedido ID': '', Nombre: '', Telefono: '', fecha: '', hora: '',
   'Ubicación': '', 'Monto Total': '', Alimentos: '',
   'Metodo de Pago': 'Efectivo', Estado: 'Pendiente',
 };
+
+function parseFecha(raw) {
+  if (!raw) return { fecha: '', hora: '' };
+  try {
+    const d = new Date(raw);
+    if (isNaN(d.getTime())) return { fecha: raw, hora: '' };
+    const fecha = d.toISOString().split('T')[0];
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mm = String(d.getMinutes()).padStart(2, '0');
+    return { fecha, hora: `${hh}:${mm}` };
+  } catch {
+    return { fecha: raw, hora: '' };
+  }
+}
+
+function combineFechaHora(fecha, hora) {
+  if (!fecha) return '';
+  if (!hora) return fecha;
+  return `${fecha}T${hora}:00.000Z`;
+}
+
+function formatDisplayDate(raw) {
+  if (!raw) return '—';
+  try {
+    const d = new Date(raw);
+    if (isNaN(d.getTime())) return raw;
+    return d.toLocaleDateString('es-MX', { year: 'numeric', month: 'short', day: 'numeric' }) +
+      ' · ' + d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+  } catch {
+    return raw;
+  }
+}
 
 export default function Pedidos() {
   const [data, setData] = useState([]);
@@ -37,11 +69,13 @@ export default function Pedidos() {
   const openCreate = () => { setForm(emptyForm); setEditingId(null); setModalOpen(true); };
 
   const openEdit = (r) => {
+    const { fecha, hora } = parseFecha(r.Fecha);
     setForm({
       'Pedido ID': r['Pedido ID'] || '',
       Nombre: r.Nombre || '',
       Telefono: r.Telefono || '',
-      Fecha: r.Fecha || '',
+      fecha,
+      hora,
       'Ubicación': r['Ubicación'] || '',
       'Monto Total': r['Monto Total'] || '',
       Alimentos: r.Alimentos || '',
@@ -56,7 +90,9 @@ export default function Pedidos() {
     setSaving(true);
     try {
       const method = editingId ? 'PUT' : 'POST';
-      const body = editingId ? { recordId: editingId, ...form } : form;
+      const { fecha, hora, ...rest } = form;
+      const payload = { ...rest, Fecha: combineFechaHora(fecha, hora) };
+      const body = editingId ? { recordId: editingId, ...payload } : payload;
       await fetch('/api/pedidos', { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       setModalOpen(false);
       setToast({ message: editingId ? 'Pedido actualizado' : 'Pedido creado', type: 'success' });
@@ -77,7 +113,6 @@ export default function Pedidos() {
   };
 
   const u = (field, value) => setForm((f) => ({ ...f, [field]: value }));
-
   const fmtMoney = (n) => n ? `$${Number(n).toLocaleString('es-MX', { minimumFractionDigits: 2 })}` : '—';
 
   return (
@@ -122,7 +157,7 @@ export default function Pedidos() {
                     <td className="text-gray-400 font-mono text-xs">{r['Pedido ID'] || '—'}</td>
                     <td className="font-medium">{r.Nombre || '—'}</td>
                     <td className="text-gray-400">{r.Telefono || '—'}</td>
-                    <td>{r.Fecha || '—'}</td>
+                    <td className="text-sm">{formatDisplayDate(r.Fecha)}</td>
                     <td className="text-gray-400">{r['Ubicación'] || '—'}</td>
                     <td className="font-medium">{fmtMoney(r['Monto Total'])}</td>
                     <td className="text-gray-400 max-w-[200px] truncate">{r.Alimentos || '—'}</td>
@@ -160,6 +195,16 @@ export default function Pedidos() {
               </select>
             </div>
           </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs text-gray-400 mb-1 block">Fecha</label>
+              <input type="date" className="input-field" value={form.fecha} onChange={(e) => u('fecha', e.target.value)} />
+            </div>
+            <div>
+              <label className="text-xs text-gray-400 mb-1 block">Hora</label>
+              <input type="time" className="input-field" value={form.hora} onChange={(e) => u('hora', e.target.value)} />
+            </div>
+          </div>
           <div>
             <label className="text-xs text-gray-400 mb-1 block">Nombre</label>
             <input className="input-field" value={form.Nombre} onChange={(e) => u('Nombre', e.target.value)} placeholder="Nombre del cliente" />
@@ -170,23 +215,17 @@ export default function Pedidos() {
               <input className="input-field" value={form.Telefono} onChange={(e) => u('Telefono', e.target.value)} placeholder="5512345678" />
             </div>
             <div>
-              <label className="text-xs text-gray-400 mb-1 block">Fecha y Hora</label>
-              <input className="input-field" value={form.Fecha} onChange={(e) => u('Fecha', e.target.value)} placeholder="2026-02-14 1:00pm" />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs text-gray-400 mb-1 block">Ubicación</label>
-              <input className="input-field" value={form['Ubicación']} onChange={(e) => u('Ubicación', e.target.value)} placeholder="Dirección" />
-            </div>
-            <div>
               <label className="text-xs text-gray-400 mb-1 block">Monto Total</label>
               <input type="number" className="input-field" value={form['Monto Total']} onChange={(e) => u('Monto Total', e.target.value)} placeholder="0.00" />
             </div>
           </div>
           <div>
+            <label className="text-xs text-gray-400 mb-1 block">Ubicación</label>
+            <input className="input-field" value={form['Ubicación']} onChange={(e) => u('Ubicación', e.target.value)} placeholder="Dirección de entrega" />
+          </div>
+          <div>
             <label className="text-xs text-gray-400 mb-1 block">Alimentos</label>
-            <textarea className="input-field" rows={2} value={form.Alimentos} onChange={(e) => u('Alimentos', e.target.value)} placeholder="Descripción de alimentos..." />
+            <textarea className="input-field" rows={2} value={form.Alimentos} onChange={(e) => u('Alimentos', e.target.value)} placeholder="10 pasteles, 5 bolillos..." />
           </div>
           <div>
             <label className="text-xs text-gray-400 mb-1 block">Método de Pago</label>

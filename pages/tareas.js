@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Power, PowerOff } from 'lucide-react';
 import Modal from '../components/Modal';
 import Toast from '../components/Toast';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -88,6 +88,18 @@ export default function Tareas() {
     setDeleting(false);
   };
 
+  const toggleActive = async (record) => {
+    try {
+      await fetch('/api/tareas', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recordId: record.id, Activa: !record.Activa }),
+      });
+      setToast({ message: record.Activa ? 'Tarea desactivada' : 'Tarea activada', type: 'success' });
+      fetchData();
+    } catch (err) { setToast({ message: 'Error', type: 'error' }); }
+  };
+
   const u = (field, value) => setForm((f) => ({ ...f, [field]: value }));
 
   const toggleResponsable = (userId) => {
@@ -148,7 +160,7 @@ export default function Tareas() {
                 <tr><td colSpan={10} className="text-center py-12 text-gray-500">No hay tareas</td></tr>
               ) : (
                 data.map((r) => (
-                  <tr key={r.id} className={isOverdue(r) ? 'border-l-2 border-l-red-500' : ''}>
+                  <tr key={r.id} className={`${isOverdue(r) ? 'border-l-2 border-l-red-500' : ''} ${!r.Activa ? 'opacity-50' : ''}`}>
                     <td className="font-medium">{r.Tarea || '—'}</td>
                     <td className="text-gray-400 max-w-[200px] truncate">{r['Descripción'] || '—'}</td>
                     <td>{r['Nombre (from Responsable)'] ? (Array.isArray(r['Nombre (from Responsable)']) ? r['Nombre (from Responsable)'].join(', ') : r['Nombre (from Responsable)']) : getUsuarioName(r.Responsable)}</td>
@@ -167,6 +179,9 @@ export default function Tareas() {
                     <td>
                       <div className="flex items-center justify-end gap-1">
                         <button onClick={() => openEdit(r)} className="p-1.5 rounded-lg hover:bg-dark-500 text-gray-400 hover:text-white transition-colors"><Pencil size={14} /></button>
+                        <button onClick={() => toggleActive(r)} className="p-1.5 rounded-lg hover:bg-dark-500 text-gray-400 hover:text-yellow-400 transition-colors" title={r.Activa ? 'Desactivar' : 'Activar'}>
+                          {r.Activa ? <PowerOff size={14} /> : <Power size={14} />}
+                        </button>
                         <button onClick={() => setConfirmDelete(r.id)} className="p-1.5 rounded-lg hover:bg-dark-500 text-gray-400 hover:text-red-400 transition-colors"><Trash2 size={14} /></button>
                       </div>
                     </td>

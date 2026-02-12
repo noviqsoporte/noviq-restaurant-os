@@ -1,5 +1,5 @@
-import { fetchRecords, TABLES } from '../../../lib/airtable';
-import { isInRange } from '../../../lib/dates';
+import { fetchRecords, TABLES } from '../../lib/airtable';
+import { isInRange } from '../../lib/dates';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
@@ -17,11 +17,9 @@ export default async function handler(req, res) {
       fetchRecords(TABLES.TAREAS),
     ]);
 
-    // Filter by date range
+    // Filter by date range (for movimientos and ventas only)
     const filteredMovimientos = movimientos.filter((m) => isInRange(m.fecha_hora, range, customStart, customEnd));
     const filteredVentas = ventas.filter((v) => isInRange(v['Fecha y Hora'], range, customStart, customEnd));
-    const filteredReservas = reservas.filter((r) => isInRange(r.fecha, range, customStart, customEnd));
-    const filteredPedidos = pedidos.filter((p) => isInRange(p.Fecha, range, customStart, customEnd));
 
     // --- INVENTARIO KPIs ---
     const itemsActivos = items.filter((i) => i.activo).length;
@@ -37,16 +35,30 @@ export default async function handler(req, res) {
     const ticketPromedio = ventasCount > 0 ? totalVendido / ventasCount : 0;
     const productosVendidos = filteredVentas.reduce((sum, v) => sum + (v.Cantidad || 0), 0);
 
-    // --- RESERVAS KPIs ---
-    const reservasCount = filteredReservas.length;
-    const personasTotal = filteredReservas.reduce((sum, r) => sum + (r.personas || 0), 0);
-    const confirmadas = filteredReservas.filter((r) => (r.estado || '').toLowerCase() === 'confirmada').length;
-    const reservasPendientes = filteredReservas.filter((r) => (r.estado || '').toLowerCase() === 'pendiente').length;
+    // --- RESERVAS KPIs (ALL reservas - past + future) ---
+    const reservasCount = reservas.length;
+    const personasTotal = reservas.reduce((sum, r) => sum + (r.personas || 0), 0);
+    const confirmadas = reservas.filter((r) => (r.estado || '').toLowerCase() === 'confirmada').length;
+    const reservasPendientes = reservas.filter((r) => (r.estado || '').toLowerCase() === 'pendiente').length;
 
     // --- PEDIDOS KPIs ---
-    const pedidosCount = filteredPedidos.length;
-    const totalPedidos = filteredPedidos.reduce((sum, p) => sum + (p['Monto Total'] || 0), 0);
-    const pedidosPendientes = filteredPedidos.filter((p) => (p.Estado || '').toLowerCase() === 'pendiente').length;
+    // Count & total: current month pedidos
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const pedidosMes = pedidos.filter((p) => {
+      if (!p.Fecha) return false;
+      return new Date(p.Fecha) >= monthStart;
+    });
+    const pedidosCount = pedidosMes.length;
+    const totalPedidos = pedidosMes.reduce((sum, p) => sum + (p['Monto Total'] || 0), 0);
+    // Pendientes: future or undated pedidos with status Pendiente
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const pedidosPendientes = pedidos.filter((p) => {
+      if ((p.Estado || '').toLowerCase() !== 'pendiente') return false;
+      if (!p.Fecha) return true; // undated pendiente counts
+      return new Date(p.Fecha) >= today;
+    }).length;
 
     // --- TAREAS KPIs ---
     const tareasActivas = tareas.filter((t) => t.Activa).length;
