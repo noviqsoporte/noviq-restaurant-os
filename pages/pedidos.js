@@ -15,14 +15,27 @@ const emptyForm = {
 function parseFecha(raw) {
   if (!raw) return { fecha: '', hora: '' };
   try {
+    // Try to extract directly from ISO string to avoid timezone issues
+    // Format: "2026-02-14T19:00:00.000Z" or "2026-02-14"
+    const str = String(raw);
+    if (str.includes('T')) {
+      const [datePart, timePart] = str.split('T');
+      const fecha = datePart; // "2026-02-14"
+      const timeClean = timePart.replace('Z', '').split('.')[0]; // "19:00:00"
+      const [hh, mm] = timeClean.split(':');
+      return { fecha, hora: `${hh}:${mm}` };
+    }
+    // If it's just a date like "2026-02-14"
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+      return { fecha: str, hora: '' };
+    }
+    // Fallback: try Date parsing
     const d = new Date(raw);
-    if (isNaN(d.getTime())) return { fecha: raw, hora: '' };
+    if (isNaN(d.getTime())) return { fecha: str, hora: '' };
     const fecha = d.toISOString().split('T')[0];
-    const hh = String(d.getHours()).padStart(2, '0');
-    const mm = String(d.getMinutes()).padStart(2, '0');
-    return { fecha, hora: `${hh}:${mm}` };
+    return { fecha, hora: '' };
   } catch {
-    return { fecha: raw, hora: '' };
+    return { fecha: String(raw), hora: '' };
   }
 }
 
