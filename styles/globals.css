@@ -1,0 +1,209 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --gold: #c9952c;
+  --gold-light: #d4a843;
+  --gold-dim: #8a6a2f;
+  --dark-900: #0a0a0a;
+  --dark-800: #0f0f0f;
+  --dark-700: #141414;
+  --dark-600: #1a1a1a;
+  --dark-500: #222222;
+  --dark-400: #2a2a2a;
+  --dark-300: #333333;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  background-color: var(--dark-900);
+  color: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--dark-800);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--dark-400);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--dark-300);
+}
+
+/* Custom Components */
+@layer components {
+  .card {
+    @apply bg-dark-700 border border-dark-400 rounded-xl p-5;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.03);
+  }
+
+  .card-hover {
+    @apply card transition-all duration-200;
+  }
+  .card-hover:hover {
+    border-color: var(--gold-dim);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(201, 149, 44, 0.15);
+  }
+
+  .btn-primary {
+    @apply px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200;
+    background: var(--gold);
+    color: #0a0a0a;
+  }
+  .btn-primary:hover {
+    background: var(--gold-light);
+    box-shadow: 0 0 16px rgba(201, 149, 44, 0.3);
+  }
+
+  .btn-secondary {
+    @apply px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 border;
+    background: transparent;
+    border-color: var(--dark-300);
+    color: #ffffff;
+  }
+  .btn-secondary:hover {
+    border-color: var(--gold-dim);
+    color: var(--gold-light);
+  }
+
+  .btn-danger {
+    @apply px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200;
+    background: #dc2626;
+    color: #ffffff;
+  }
+  .btn-danger:hover {
+    background: #ef4444;
+  }
+
+  .input-field {
+    @apply w-full px-3 py-2 rounded-lg text-sm text-white placeholder-gray-500 outline-none transition-all duration-200;
+    background: var(--dark-600);
+    border: 1px solid var(--dark-400);
+  }
+  .input-field:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 2px rgba(201, 149, 44, 0.15);
+  }
+
+  .select-field {
+    @apply input-field appearance-none cursor-pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+  }
+
+  .table-container {
+    @apply w-full overflow-x-auto rounded-xl;
+    border: 1px solid var(--dark-400);
+  }
+
+  .data-table {
+    @apply w-full text-sm;
+  }
+  .data-table thead {
+    background: var(--dark-600);
+  }
+  .data-table th {
+    @apply px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider;
+    color: #999;
+  }
+  .data-table td {
+    @apply px-4 py-3 border-t;
+    border-color: var(--dark-400);
+  }
+  .data-table tbody tr {
+    @apply transition-colors duration-150;
+  }
+  .data-table tbody tr:hover {
+    background: var(--dark-600);
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+  .badge-gold {
+    @apply badge;
+    background: rgba(201, 149, 44, 0.15);
+    color: var(--gold-light);
+  }
+  .badge-green {
+    @apply badge;
+    background: rgba(34, 197, 94, 0.15);
+    color: #4ade80;
+  }
+  .badge-red {
+    @apply badge;
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+  }
+  .badge-gray {
+    @apply badge;
+    background: rgba(156, 163, 175, 0.15);
+    color: #9ca3af;
+  }
+  .badge-blue {
+    @apply badge;
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
+  }
+  .badge-yellow {
+    @apply badge;
+    background: rgba(234, 179, 8, 0.15);
+    color: #fbbf24;
+  }
+}
+
+/* Modal backdrop */
+.modal-backdrop {
+  @apply fixed inset-0 z-50 flex items-center justify-center;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  @apply bg-dark-700 border border-dark-400 rounded-2xl p-6 w-full max-w-lg max-h-[85vh] overflow-y-auto;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.6);
+}
+
+/* Toast notification */
+.toast {
+  @apply fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl text-sm font-medium;
+  background: var(--dark-600);
+  border: 1px solid var(--dark-400);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* KPI shimmer loading */
+.shimmer {
+  @apply rounded-lg;
+  background: linear-gradient(90deg, var(--dark-600) 25%, var(--dark-500) 50%, var(--dark-600) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
