@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
-import { Plus, Pencil, Trash2, CalendarCheck } from 'lucide-react';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
 import Modal from '../components/Modal';
 import Toast from '../components/Toast';
 import ConfirmDialog from '../components/ConfirmDialog';
 import StatusBadge from '../components/StatusBadge';
+import { MobileCardContainer, MobileCard, MobileCardHeader, MobileCardGrid, MobileCardField, MobileCardActions } from '../components/MobileCard';
 
 const emptyForm = {
   ID: '', fecha: '', hora: '', nombre: '', personas: '',
@@ -27,21 +28,14 @@ export default function Reservas() {
     setLoading(true);
     try {
       const res = await fetch('/api/reservas');
-      const records = await res.json();
-      setData(records);
-    } catch (err) {
-      console.error(err);
-    }
+      setData(await res.json());
+    } catch (err) { console.error(err); }
     setLoading(false);
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const openCreate = () => {
-    setForm(emptyForm);
-    setEditingId(null);
-    setModalOpen(true);
-  };
+  const openCreate = () => { setForm(emptyForm); setEditingId(null); setModalOpen(true); };
 
   const openEdit = (record) => {
     setForm({
@@ -65,34 +59,22 @@ export default function Reservas() {
     try {
       const method = editingId ? 'PUT' : 'POST';
       const body = editingId ? { recordId: editingId, ...form } : form;
-      await fetch('/api/reservas', {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
+      await fetch('/api/reservas', { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       setModalOpen(false);
       setToast({ message: editingId ? 'Reserva actualizada' : 'Reserva creada', type: 'success' });
       fetchData();
-    } catch (err) {
-      setToast({ message: 'Error al guardar', type: 'error' });
-    }
+    } catch (err) { setToast({ message: 'Error al guardar', type: 'error' }); }
     setSaving(false);
   };
 
   const handleDelete = async () => {
     setDeleting(true);
     try {
-      await fetch('/api/reservas', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recordId: confirmDelete }),
-      });
+      await fetch('/api/reservas', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ recordId: confirmDelete }) });
       setConfirmDelete(null);
       setToast({ message: 'Reserva eliminada', type: 'success' });
       fetchData();
-    } catch (err) {
-      setToast({ message: 'Error al eliminar', type: 'error' });
-    }
+    } catch (err) { setToast({ message: 'Error al eliminar', type: 'error' }); }
     setDeleting(false);
   };
 
@@ -109,11 +91,47 @@ export default function Reservas() {
             <p className="text-sm text-gray-500 mt-1">{data.length} registros</p>
           </div>
           <button className="btn-primary flex items-center gap-2" onClick={openCreate}>
-            <Plus size={16} /> Nueva reserva
+            <Plus size={16} /> <span className="hidden sm:inline">Nueva reserva</span><span className="sm:hidden">Nueva</span>
           </button>
         </div>
 
-        <div className="table-container">
+        {/* Mobile Cards */}
+        {loading ? (
+          <p className="text-center py-12 text-gray-500 lg:hidden">Cargando...</p>
+        ) : data.length === 0 ? (
+          <p className="text-center py-12 text-gray-500 lg:hidden">No hay reservas</p>
+        ) : (
+          <MobileCardContainer>
+            {data.map((r) => (
+              <MobileCard key={r.id}>
+                <MobileCardHeader
+                  title={r.nombre || 'Sin nombre'}
+                  subtitle={`ID: ${r.ID || '—'}`}
+                  badge={<StatusBadge status={r.estado} />}
+                />
+                <MobileCardGrid>
+                  <MobileCardField label="Fecha" value={r.fecha} />
+                  <MobileCardField label="Hora" value={r.hora} />
+                  <MobileCardField label="Personas" value={r.personas} />
+                </MobileCardGrid>
+                <MobileCardGrid cols={2}>
+                  <MobileCardField label="Teléfono" value={r.telefono} />
+                  <MobileCardField label="Anticipo" value={r.anticipo_pagado} />
+                </MobileCardGrid>
+                {r.ocasion_especial && (
+                  <p className="text-xs text-gray-400">🎉 {r.ocasion_especial}</p>
+                )}
+                <MobileCardActions>
+                  <button onClick={() => openEdit(r)} className="btn-secondary flex-1 text-xs !py-1.5">Editar</button>
+                  <button onClick={() => setConfirmDelete(r.id)} className="btn-danger flex-1 text-xs !py-1.5">Eliminar</button>
+                </MobileCardActions>
+              </MobileCard>
+            ))}
+          </MobileCardContainer>
+        )}
+
+        {/* Desktop Table */}
+        <div className="table-container hidden lg:block">
           <table className="data-table">
             <thead>
               <tr>
@@ -148,12 +166,8 @@ export default function Reservas() {
                     <td>{r.anticipo_pagado || '—'}</td>
                     <td>
                       <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => openEdit(r)} className="p-1.5 rounded-lg hover:bg-dark-500 text-gray-400 hover:text-white transition-colors">
-                          <Pencil size={14} />
-                        </button>
-                        <button onClick={() => setConfirmDelete(r.id)} className="p-1.5 rounded-lg hover:bg-dark-500 text-gray-400 hover:text-red-400 transition-colors">
-                          <Trash2 size={14} />
-                        </button>
+                        <button onClick={() => openEdit(r)} className="p-1.5 rounded-lg hover:bg-dark-500 text-gray-400 hover:text-white transition-colors"><Pencil size={14} /></button>
+                        <button onClick={() => setConfirmDelete(r.id)} className="p-1.5 rounded-lg hover:bg-dark-500 text-gray-400 hover:text-red-400 transition-colors"><Trash2 size={14} /></button>
                       </div>
                     </td>
                   </tr>
@@ -226,15 +240,7 @@ export default function Reservas() {
         </div>
       </Modal>
 
-      <ConfirmDialog
-        open={!!confirmDelete}
-        onClose={() => setConfirmDelete(null)}
-        onConfirm={handleDelete}
-        title="Eliminar reserva"
-        message="¿Seguro que deseas eliminar esta reserva? No se puede deshacer."
-        loading={deleting}
-      />
-
+      <ConfirmDialog open={!!confirmDelete} onClose={() => setConfirmDelete(null)} onConfirm={handleDelete} title="Eliminar reserva" message="¿Seguro que deseas eliminar esta reserva?" loading={deleting} />
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </>
   );

@@ -55,9 +55,7 @@ export default function Layout({ children }) {
         {/* Logo */}
         <div className="flex items-center justify-between h-16 px-5 border-b border-dark-400">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'var(--gold)' }}>
-              <span className="text-black font-bold text-sm">N</span>
-            </div>
+            <img src="/logo.png" alt="NOVIQ" className="w-11 h-11 rounded-lg object-contain" />
             <div>
               <h1 className="text-sm font-bold tracking-wide text-white">NOVIQ</h1>
               <p className="text-[10px] text-gray-500 tracking-widest uppercase">Restaurant OS</p>
