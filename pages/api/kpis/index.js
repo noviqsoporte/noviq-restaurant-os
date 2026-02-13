@@ -66,7 +66,10 @@ export default async function handler(req, res) {
     const tareasCompletadas = tareas.filter((t) => (t.Estado || '').toLowerCase() === 'completada').length;
     const tareasVencidas = tareas.filter((t) => {
       if (!t['Fecha Limite']) return false;
-      return new Date(t['Fecha Limite']) < new Date() && (t.Estado || '').toLowerCase() !== 'completada';
+      if ((t.Estado || '').toLowerCase() === 'completada') return false;
+      const limiteStr = t['Fecha Limite'].split('T')[0];
+      const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' });
+      return limiteStr < todayStr;
     }).length;
 
     res.status(200).json({

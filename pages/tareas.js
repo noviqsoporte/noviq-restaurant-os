@@ -113,7 +113,11 @@ export default function Tareas() {
 
   const isOverdue = (r) => {
     if (!r['Fecha Limite']) return false;
-    return new Date(r['Fecha Limite']) < new Date() && (r.Estado || '').toLowerCase() !== 'completada';
+    if ((r.Estado || '').toLowerCase() === 'completada') return false;
+    // Compare date strings only (YYYY-MM-DD) to avoid timezone issues
+    const limiteStr = r['Fecha Limite'].split('T')[0];
+    const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' }); // YYYY-MM-DD format
+    return limiteStr < todayStr;
   };
 
   return (
